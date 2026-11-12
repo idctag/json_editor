@@ -3,10 +3,10 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, ListItem, Paragraph},
+    widgets::{Block, Borders, List, ListItem, Paragraph},
 };
 
-use crate::app::App;
+use crate::app::{App, CurrentScreen, CurrentlyEditing};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
@@ -36,6 +36,37 @@ pub fn ui(frame: &mut Frame, app: &App) {
             Style::default().fg(Color::Yellow),
         ))));
     }
+
+    let list = List::new(list_items);
+    frame.render_widget(list, chunks[1]);
+
+    let current_navigation_text = vec![
+        match app.current_screen {
+            CurrentScreen::Main => Span::styled("Normal Mode", Style::default().fg(Color::Green)),
+            CurrentScreen::Editing => {
+                Span::styled("Editing Mode", Style::default().fg(Color::Yellow))
+            }
+            CurrentScreen::Exiting => Span::styled("Exiting", Style::default().fg(Color::LightRed)),
+        }
+        .to_owned(),
+        Span::styled(" | ", Style::default().fg(Color::White)),
+        {
+            if let Some(editing) = &app.currently_editing {
+                match editing {
+                    CurrentlyEditing::Key => {
+                        Span::styled("Editing json key", Style::default().fg(Color::Green))
+                    }
+                    CurrentlyEditing::Value => {
+                        Span::styled("Editing json value", Style::default().fg(Color::LightGreen))
+                    }
+                }
+            } else {
+                Span::styled("Not Editing Anything", Style::default().fg(Color::DarkGray))
+            }
+        },
+    ];
+    let mode_footer = Paragraph::new(Line::from(current_navigation_text))
+        .block(Block::default().borders(Borders::ALL));
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
